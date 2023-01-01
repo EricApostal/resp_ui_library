@@ -14,8 +14,6 @@ function build_repository(url, folder_name)
 	
 	makefolder("repos")
 	makefolder(folder_path)
-	
-	print('Building repository from url')
 
 	local a = http.request({
 	Url = url,
@@ -29,14 +27,14 @@ function build_repository(url, folder_name)
 			
 			if table.find(listfiles(folder_path), folder_path .. "\\" .. v.name) == nil then
 				-- print( folder_path .. "\\" .. v.name .. " not in the dir " .. folder_path .. "(" .. #listfiles(folder_path) .. " items)" )
-				print("Downloading " .. folder_path .. "\\" .. v.name)
+				-- print("Downloading " .. folder_path .. "\\" .. v.name)
 				if v.type == 'file' then
 					local content = http.request({
 					Url = v.download_url,
 					Method = "GET"
 					}).Body
 					
-					print('Writing To: '.. folder_path .. '\\' .. v.name)
+					-- print('Writing To: '.. folder_path .. '\\' .. v.name)
 					writefile(folder_path .. '\\' .. v.name, content)
 				elseif v.type == 'dir' then
 					makefolder(folder_path .. '\\' .. v.name)
@@ -44,13 +42,14 @@ function build_repository(url, folder_name)
 				end
 				
 			else
-				print("Found " .. folder_path .. "\\" .. v.name)
+				-- print("Found " .. folder_path .. "\\" .. v.name)
 			end
 	end
 
 	-- print('Repository Built')
 end
 
+print("downloading depends")
 build_repository("https://api.github.com/repos/Roblox/roact/contents/src?ref=master", "roact")
-print("Downloaded roact")
+print("downloading main script")
 build_repository("https://api.github.com/repos/Roblox/roact/contents/src?ref=master", "resps_ui_lib")
