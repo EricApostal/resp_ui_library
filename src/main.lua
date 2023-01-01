@@ -1,15 +1,23 @@
+local main = {}
 --[[ 
 Main UI builder :)
 ]]
 
-local roact = {}
-for _, file in listfiles('repos\\roact', true) do  -- Set the second argument to `true` to include subdirectories
-    if not file:match("%.%a+$") then  -- Skip directories
-        local chunk = loadfile(file)
-        roact[file] = chunk()
-    end
+function main.start()
+    local roact = {}
+
+    -- dodgy ass way to load libraries --
+    for _, file in listfiles('repos\\roact', true) do  -- Set the second argument to `true` to include subdirectories
+        if not file:match("%.%a+$") then  -- Skip directories
+            local chunk = loadfile(file)
+            roact[file] = chunk()
+        end
+    end    
+    --------------------------------------
+    print("Main function called!")
 end
 
-function main()
-    print("main lua file called!")
-end
+
+
+
+return main

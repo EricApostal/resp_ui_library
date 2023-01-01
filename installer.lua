@@ -67,7 +67,6 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 					Url = v.download_url,
 					Method = "GET"
 					}).Body
-					
 					writefile(folder_path .. '\\' .. v.name, content)
 				elseif v.type == 'dir' then
 					makefolder(folder_path .. '\\' .. v.name)
@@ -88,5 +87,5 @@ print("Checking dependencies...")
 build_repository("https://api.github.com/repos/Roblox/roact/", "roact", "src?ref=master")
 build_repository("https://api.github.com/repos/SirTZN/resp_ui_library/", "resp_ui_lib")
 print("Installed, running script now...")
-local main_function = loadfile('repos\\resp_ui_lib\\src\\main.lua')
-print(main_function.main())
+local main_script = loadfile('repos\\resp_ui_lib\\src\\main.lua')
+print(main_script.start())
