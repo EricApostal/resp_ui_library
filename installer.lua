@@ -3,6 +3,8 @@
     intentionally modular for you skiddies out there :)
 ]]
 
+-- PROBLEM: UPDATES DON'T APPLY WHEN IN SUBDIRECTORY
+
 function build_repository(base_repo: string, folder_name: string, extra_path: string, is_recursive: boolean) 
 	--[[
 		- Recursively iterates through github repo
@@ -24,10 +26,6 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 		essentially do the same thing
 	]]
 
-	print("base repo: ")
-	print(base_repo)
-	
-
 	if not is_recursive then
 		print("Installing " .. folder_name .. "...")
 		url = base_repo .. "contents/" .. (extra_path or '')
@@ -41,12 +39,15 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 		}).Body )
 
 	local needs_update = false
-	if isfile(folder_path .. "\\last_update.txt") and not is_recursive then
-		if readfile(last_update_path) ~= needs_update_resp.commit.commit.author.date then
-			print("Repository needs to be updated, one moment!")
+	if isfile(folder_path .. "\\last_update.txt") then
+		if readfile(last_update_path) ~= needs_update_resp.commit.commit.committer.date then
+			print("Repository " .. folder_name .. " needs to be updated, one moment!")
+			delfolder(folder_path)
 			needs_update = true
 		else
 			print("Dependency up to date!")
+			print(readfile(last_update_path))
+			print(needs_update_resp.commit.commit.author.date)
 		end
 	end
 
@@ -57,10 +58,8 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 
 	local response = a.Body
 	local json_body = game:GetService("HttpService"):JSONDecode(response)
-	print("url = ")
-	print(url)
 	for _, v in json_body do
-		if v.name == nil then print(v) end
+		if v.name == nil then warn(v) end
 			if (table.find(listfiles(folder_path), folder_path .. "\\" .. v.name) == nil) or needs_update then
 				if v.type == 'file' then
 					local content = http.request({
@@ -77,7 +76,9 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 				-- print("Found " .. folder_path .. "\\" .. v.name)
 			end
 	end
+	
 	if not is_recursive then
+		print(needs_update_resp)
 		writefile(last_update_path, needs_update_resp.commit.commit.author.date)
 		print("Installed " .. folder_name .. "!")
 	end
@@ -88,4 +89,4 @@ build_repository("https://api.github.com/repos/Roblox/roact/", "roact", "src?ref
 build_repository("https://api.github.com/repos/SirTZN/resp_ui_library/", "resp_ui_lib")
 print("Installed, running script now...")
 local main_script = loadfile('repos\\resp_ui_lib\\src\\main.lua')
-print(main_script.start())
+print(main_script)

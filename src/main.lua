@@ -17,7 +17,4 @@ function main.start()
     print("Main function called!")
 end
 
-
-
-
 return main
