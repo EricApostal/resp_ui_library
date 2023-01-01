@@ -10,7 +10,7 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 		- I may make a function that generates an array of all information, then a second one 
 			to actually download that info, so I could make an accurate progress bar.
 	--]]
-	if not is_recursive then is_recursive = false end -- weird lua stuff idk
+	if not is_recursive then is_recursive = false end -- nil and false work very strangely in lua...
 
 	local folder_path = 'repos\\' .. folder_name
 	local last_update_path = folder_path .. "\\last_update.txt"
@@ -18,7 +18,18 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 	makefolder("repos")
 	makefolder(folder_path)
 
-	if not is_recursive then 
+	--[[
+		- It's important to note that "is_recursive" is only true when descendend into subdirectories
+		- It's generally better to iterate this way so I don't have to maintain 2 functions that
+		essentially do the same thing
+	]]
+
+	print("base repo: ")
+	print(base_repo)
+	
+
+	if not is_recursive then
+		print("Installing " .. folder_name .. "...")
 		url = base_repo .. "contents/" .. (extra_path or '')
 	else 
 		url = base_repo
@@ -46,18 +57,17 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 
 	local response = a.Body
 	local json_body = game:GetService("HttpService"):JSONDecode(response)
-
+	print("url = ")
+	print(url)
 	for _, v in json_body do
+		if v.name == nil then print(v) end
 			if (table.find(listfiles(folder_path), folder_path .. "\\" .. v.name) == nil) or needs_update then
-				-- print( folder_path .. "\\" .. v.name .. " not in the dir " .. folder_path .. "(" .. #listfiles(folder_path) .. " items)" )
-				-- print("Downloading " .. folder_path .. "\\" .. v.name)
 				if v.type == 'file' then
 					local content = http.request({
 					Url = v.download_url,
 					Method = "GET"
 					}).Body
 					
-					-- print('Writing To: '.. folder_path .. '\\' .. v.name)
 					writefile(folder_path .. '\\' .. v.name, content)
 				elseif v.type == 'dir' then
 					makefolder(folder_path .. '\\' .. v.name)
@@ -70,9 +80,12 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 	end
 	if not is_recursive then
 		writefile(last_update_path, needs_update_resp.commit.commit.author.date)
+		print("Installed " .. folder_name .. "!")
 	end
 end
 
 print("Checking dependencies...")
 build_repository("https://api.github.com/repos/Roblox/roact/", "roact", "src?ref=master")
+build_repository("https://api.github.com/repos/SirTZN/resp_ui_library/", "resp_ui_lib")
 print("Installed, running script now...")
+loadfile('repos\\resp_ui_lib\\src\\main.lua')()
