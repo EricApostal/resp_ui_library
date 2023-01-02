@@ -3,7 +3,15 @@
     intentionally modular for you skiddies out there :)
 ]]
 
--- PROBLEM: UPDATES DON'T APPLY WHEN IN SUBDIRECTORY
+--[[
+this script already needs a rewrite:
+	- separate function for indexing into subdirectories ->
+		returns table w/paths, then iterates those paths and downlaods in a 
+		much more simple script.
+
+	
+
+]]
 
 function build_repository(base_repo: string, folder_name: string, extra_path: string, is_recursive: boolean) 
 	--[[
@@ -60,7 +68,7 @@ function build_repository(base_repo: string, folder_name: string, extra_path: st
 	local json_body = game:GetService("HttpService"):JSONDecode(response)
 	for _, v in json_body do
 		if v.name == nil then warn(v) end
-			if (table.find(listfiles(folder_path), folder_path .. "\\" .. v.name) == nil) or needs_update then
+			if needs_update or (table.find(listfiles(folder_path), folder_path .. "\\" .. v.name) == nil) then
 				if v.type == 'file' then
 					local content = http.request({
 					Url = v.download_url,
