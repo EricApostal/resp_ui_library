@@ -18,7 +18,7 @@ function send_request(url)
 		   warn(string.format("Request returned with code %s!", response.StatusCode))
 	   end
 	   return response
-   end
+end
 
 -- Get the HttpService
 local http_service = game:GetService("HttpService")
@@ -70,7 +70,7 @@ end
 
 function get_folder(full_path)
 	-- strips the name of the item off, so I can accurately index the folder
-	print( string.format("full_path = %s", full_path))
+	-- print( string.format("full_path = %s", full_path))
     local working_directory = "repos/"
     local path_split = string.split(full_path, '/')
     table.remove(path_split, #path_split)
@@ -113,7 +113,7 @@ function get_last_commit_time(repository_url)
 
 	local last_commit_url = "https://api.github.com/repos/" .. get_base_url(repository_url) .. "/branches/master"
 	local last_commit_str = send_request( last_commit_url ).Body
-	
+	-- print(send_request( last_commit_url ).StatusCode)
 	local last_commit_time = http_service:JSONDecode(last_commit_str).commit.commit.committer.date
 
 	if last_commit_time == nil then
@@ -125,7 +125,7 @@ end
 -- Function to download all of the files in the repository
 function download_files(repository_index, local_repository_base, repository_url)
     -- Iterate through the list of files in the repository
-
+  print('DOWNLOADING FILES')
 	if not needs_update(local_repository_base, repository_url, repository_index) then
 		-- print("Repo is already up to date!")
 		return true
@@ -133,13 +133,18 @@ function download_files(repository_index, local_repository_base, repository_url)
 
     for i, file_data in ipairs(repository_index) do
         -- Print a message indicating the progress of the download
-        print(string.format("%d/%d items downloaded!", i, #repository_index))
+        -- print(string.format("%d/%d items downloaded!", i, #repository_index))
 
         -- Create the directory structure for the file if it does not exist
         create_directory(file_data.path)
 
         -- Download the file
-        download_file(file_data)
+        print( string.format("Installing file: %s", file_data.name) )
+		if file_data.type == "file" then
+        	download_file(file_data)
+		else
+			print("it's a dir!")
+		end
     end
 
 	-- Create file indicating the last repository update
@@ -181,76 +186,66 @@ function download_file(file_data)
     local file_content = response.Body
 
     -- Write the file to the repository directory
-	print( string.format("Writing to directory: %s", string.format("repos/%s", file_data.path)) )
+	-- print( string.format("Writing to directory: %s", string.format("repos/%s", file_data.path)) )
     writefile(string.format("repos/%s", file_data.path), file_content)
 end
 
 -- Function to generate an index of the repository's files and directories
-function generate_index(repository_url, folder_name)
-    -- Initialize a table to store the index
-    local repository_indexes = {}
+function generate_index(repository_url, local_path)
 
-    -- Make a request to the repository URL
-    local response = send_request(repository_url)
 
-    -- If the request is not successful, print a warning message
-    if response.StatusCode ~= 200 then
-        warn(string.format("Status code %d was thrown when accessing URL %s",
-            response.StatusCode, repository_url))
+  local files = {}
+
+  local response = send_request(repository_url)
+
+  -- If the request is not successful, print a warning message
+  if response.StatusCode ~= 200 then
+      warn(string.format("Status code %d was thrown when accessing URL %s",
+          response.StatusCode, repository_url))
+  end
+
+  local json_return =  http_service:JSONDecode(response.Body)
+
+  for i, item in pairs(json_return) do
+    -- Modify the path field to include the full path to the file
+    local name = item.name
+    local path = local_path .. "/" .. name
+    local download_url = item.download_url
+    files[i] = {
+      name = name,
+      path = path,
+	  type = item.type,
+      download_url = download_url
+    }
+
+    -- Check if the item is a directory
+    if item.type == "dir" then
+      -- If it is a directory, recursively call generate_index with the URL
+      -- of the directory as the repository_url argument
+      local subfiles = generate_index(item.url, path)
+      -- Add the subfiles to the files table
+      for subfile_name, subfile_info in pairs(subfiles) do
+        files[subfile_name] = subfile_info
+      end
     end
+  end
 
-    -- Decode the JSON response from the request
-    local data = http_service:JSONDecode(response.Body)
+  for _,v in files do
+	print(v.name)
+  end
 
-    -- Iterate through the list of files and directories in the repository
-    for _, file_data in data do
 
-        -- If the current entry is a file, add it to the index
-        if file_data.type == "file" then
-            table.insert(repository_indexes, {
-                name = file_data.name,
-                download_url = file_data.download_url,
-                path = string.format("%s/%s", folder_name, file_data.name)
-            })
-        -- If the current entry is a directory, recursively generate an index for it
-        elseif file_data.type == "dir" then
-            local subdirectory_name = file_data.name
-            makefolder(string.format("%s/%s/", folder_name, subdirectory_name))
-            local subdirectory_data = generate_index(
-                string.format("%s/%s", repository_url, file_data.name), folder_name)
-            -- Add the files and directories in the subdirectory to the index, with their paths modified to reflect the subdirectory
-            for _, subdirectory_file_data in subdirectory_data do
-                local _fdata = subdirectory_file_data
-                _fdata.path = string.format("%s/%s/%s", folder_name, subdirectory_name, _fdata.name)
-                table.insert(repository_indexes, _fdata)
-            end
-        end
-    end
-	-- print( string.format("NEW PATH: %s", path) )
+  return files
 
-	-- converts the relative paths into absolute paths
-	-- a bit hacky, but works for descening infinite directories
-	for i,v in repository_indexes do
-		local file_info = v
-
-		local path = string.gsub(file_info.download_url, "https://raw.githubusercontent.com/", "https://api.github.com/repos/")
-		local path = string.gsub(path, string.gsub(repository_url, "contents", "master"), "")
-		local path = string.gsub(path, "//", "/")
-		local path = folder_name .. "/" .. path
-		file_info.path = path
-
-	end
-
-    return repository_indexes
 end
 
+
+
 print("Building roact repository...")
--- build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
+build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
 print("Roact has been downloaded!")
 print("Building main script hub...")
 build_repository("https://github.com/SirTZN/resp_ui_library/tree/master/src", "resp_ui_lib")
 print("Script hub has been downloaded!\nRunning script!")
 
-print(string.format("is main.lua a file? %s", tostring(isfile("repos/resp_ui_lib/main.lua"))))
-dofile("repos/resp_ui_lib/main.lua")
-
+-- dofile("repos/resp_ui_lib/main.lua")
