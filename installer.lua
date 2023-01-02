@@ -4,7 +4,7 @@ clones into /repos/file_name
 
 Intentionally modular for you skiddies out there <3
 ]]
-
+for i = 1,10 do print('\n') end
 -- module to just wrap some of the requests, makes my code look nice :D
 function send_request(url)
 	   local response = http.request({
@@ -36,9 +36,6 @@ function build_repository(repository_url, folder_name)
 		url = string.gsub(url, "/tree/master/", "/contents/")
 
 	end
-
-    -- Print a message indicating that the repository is being built
-    print(string.format("Now building repository for %s", folder_name))
 
     -- Create the "repos" directory if it does not exist
     makefolder("repos")
@@ -73,7 +70,7 @@ end
 
 function get_folder(full_path)
 	-- strips the name of the item off, so I can accurately index the folder
-
+	print( string.format("full_path = %s", full_path))
     local working_directory = "repos/"
     local path_split = string.split(full_path, '/')
     table.remove(path_split, #path_split)
@@ -85,6 +82,7 @@ function get_folder(full_path)
 
     -- Remove the trailing slash from the directory path
     working_directory = working_directory:sub(1, #working_directory - 1)
+	working_directory = string.gsub(working_directory, "//", "/")
 	return working_directory
 end
 
@@ -157,16 +155,21 @@ function create_directory(file_path)
 	-- retrieves the folder name, removing the file
 	-- ei: repos/roact/hello.lua -> repos/roact
 	local working_directory = get_folder(file_path)
+	local split_dir = string.split(working_directory, "/")
+	local active_dir = ''
 
-    -- Create the directory if it does not exist
-    if not isfolder(working_directory) then
-        makefolder(working_directory)
+	for index, dir in split_dir do
+		active_dir = active_dir .. "/" .. dir
+		-- Create the directory if it does not exist
+		if not isfolder(active_dir) then
+			makefolder(active_dir)
 
-        -- If the directory still does not exist after being created, throw an error
-        if not isfolder(working_directory) then
-            error("No folder was made, you done messed something up -_-")
-        end
-    end
+			-- If the directory still does not exist after being created, throw an error
+			if not isfolder(active_dir) then
+				error(string.format("No folder was made, you done messed something up -_-\nFolder was intended to be at %s", working_directory))
+			end
+		end
+	end
 end
 
 -- Function to download a file
@@ -178,6 +181,7 @@ function download_file(file_data)
     local file_content = response.Body
 
     -- Write the file to the repository directory
+	print( string.format("Writing to directory: %s", string.format("repos/%s", file_data.path)) )
     writefile(string.format("repos/%s", file_data.path), file_content)
 end
 
@@ -200,6 +204,7 @@ function generate_index(repository_url, folder_name)
 
     -- Iterate through the list of files and directories in the repository
     for _, file_data in data do
+
         -- If the current entry is a file, add it to the index
         if file_data.type == "file" then
             table.insert(repository_indexes, {
@@ -221,11 +226,26 @@ function generate_index(repository_url, folder_name)
             end
         end
     end
+	-- print( string.format("NEW PATH: %s", path) )
+
+	-- converts the relative paths into absolute paths
+	-- a bit hacky, but works for descening infinite directories
+	for i,v in repository_indexes do
+		local file_info = v
+
+		local path = string.gsub(file_info.download_url, "https://raw.githubusercontent.com/", "https://api.github.com/repos/")
+		local path = string.gsub(path, string.gsub(repository_url, "contents", "master"), "")
+		local path = string.gsub(path, "//", "/")
+		local path = folder_name .. "/" .. path
+		file_info.path = path
+
+	end
+
     return repository_indexes
 end
 
 print("Building roact repository...")
-build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
+-- build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
 print("Roact has been downloaded!")
 print("Building main script hub...")
 build_repository("https://github.com/SirTZN/resp_ui_library/tree/master/src", "resp_ui_lib")
@@ -233,3 +253,4 @@ print("Script hub has been downloaded!\nRunning script!")
 
 print(string.format("is main.lua a file? %s", tostring(isfile("repos/resp_ui_lib/main.lua"))))
 dofile("repos/resp_ui_lib/main.lua")
+
