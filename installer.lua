@@ -1,3 +1,11 @@
+--[[
+Basically just a repository cloner
+clones into /repos/file_name
+
+Intentionally modular for you skiddies out there <3
+]]
+
+
 -- Get the HttpService
 local http_service = game:GetService("HttpService")
 
@@ -13,7 +21,6 @@ function build_repository(repository_url, folder_name)
 		url = string.gsub(url, "https://github.com/", "https://api.github.com/repos/")
 		url = string.gsub(url, "/tree/master/", "/contents/")
 
-		print(string.format("string did not match url, new url = %s", url))
 	end
 
     -- Print a message indicating that the repository is being built
@@ -63,7 +70,6 @@ function get_base_url(url)
 	local split_url = string.split(api_base_stripped, '/')
 
 	local _r = string.format("%s/%s", split_url[1], split_url[2])
-	print(string.format("base url is: %s", _r))
 	return _r
 end
 
@@ -105,7 +111,12 @@ function get_last_commit_time(repository_url)
 
 	local last_commit_url = "https://api.github.com/repos/" .. get_base_url(repository_url) .. "/branches/master"
 	local last_commit_str = send_request( last_commit_url ).Body
+	
 	local last_commit_time = http_service:JSONDecode(last_commit_str).commit.commit.committer.date
+
+	if last_commit_time == nil then
+		print( string.format("Error getting last commit time from url %s", repository_url ))
+	end
 
 	return last_commit_time
 end
@@ -211,3 +222,9 @@ end
 print("Building roact repository...")
 build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
 print("Roact has been downloaded!")
+print("Building main script hub...")
+build_repository("https://github.com/SirTZN/resp_ui_library/tree/master/src", "resp_ui_lib")
+print("Script hub has been downloaded!\nRunning script!")
+
+print(string.format("is main.lua a file? %s", tostring(isfile("repos/resp_ui_lib/main.lua"))))
+dofile("repos/resp_ui_lib/main.lua")

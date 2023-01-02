@@ -2,6 +2,7 @@ local main = {}
 --[[ 
 Main UI builder :)
 ]]
+print("main program called :)")
 
 function main.start()
     local roact = {}
