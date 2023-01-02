@@ -90,12 +90,20 @@ function get_folder(full_path)
 	return working_directory
 end
 
-function needs_update(local_repository_base, repository_url)
+function needs_update(local_repository_base, repository_url, repository_index)
 	-- checks if it needs to be installed or updated
 	local last_update_path = string.format("%s/last_update.txt", "repos/" .. local_repository_base)
 	if not isfile( last_update_path ) then
 		print( string.format("(%s) Can't find last update, assuming first download", local_repository_base ))
 		return true
+	end
+
+	for i,file in ipairs(repository_index) do
+		if not isfile("repos/" .. file.path) then
+			print("file not found in repo, automatically assuming download")
+			print(string.format("Index = %s Filename = %s", i, "repos/" .. file.path))
+			return true
+		end
 	end
 
 	if get_last_commit_time(repository_url) == readfile(last_update_path) then
@@ -123,7 +131,8 @@ end
 -- Function to download all of the files in the repository
 function download_files(repository_index, local_repository_base, repository_url)
     -- Iterate through the list of files in the repository
-	if not needs_update(local_repository_base, repository_url) then
+
+	if not needs_update(local_repository_base, repository_url, repository_index) then
 		print("Repo is already up to date!")
 		return true
 	end
