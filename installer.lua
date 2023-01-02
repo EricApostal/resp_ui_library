@@ -19,7 +19,7 @@ function send_request(url)
 	   end
 	   return response
    end
-   
+
 -- Get the HttpService
 local http_service = game:GetService("HttpService")
 
@@ -98,8 +98,6 @@ function needs_update(local_repository_base, repository_url, repository_index)
 
 	for i,file in ipairs(repository_index) do
 		if not isfile("repos/" .. file.path) then
-			print("file not found in repo, automatically assuming download")
-			print(string.format("Index = %s Filename = %s", i, "repos/" .. file.path))
 			return true
 		end
 	end
@@ -131,7 +129,7 @@ function download_files(repository_index, local_repository_base, repository_url)
     -- Iterate through the list of files in the repository
 
 	if not needs_update(local_repository_base, repository_url, repository_index) then
-		print("Repo is already up to date!")
+		-- print("Repo is already up to date!")
 		return true
 	end
 
