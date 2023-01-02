@@ -5,7 +5,21 @@ clones into /repos/file_name
 Intentionally modular for you skiddies out there <3
 ]]
 
-
+-- module to just wrap some of the requests, makes my code look nice :D
+function send_request(url)
+	   local response = http.request({
+	   Url = url,
+	   Method = "GET",
+	   Headers = {
+		   ["Authorization"] = ""
+	   }
+	   })
+	   if not response.StatusCode == 200 then
+		   warn(string.format("Request returned with code %s!", response.StatusCode))
+	   end
+	   return response
+   end
+   
 -- Get the HttpService
 local http_service = game:GetService("HttpService")
 
@@ -40,22 +54,6 @@ function build_repository(repository_url, folder_name)
 
     -- Print a message indicating that the repository has been built
     print("Repository built!")
-end
-
-function send_request(url)
- -- https://api.github.com/repos/SirTZN/resp_ui_library/branches/master
-
-	local response = http.request({
-	Url = url,
-	Method = "GET",
-	Headers = {
-		["Authorization"] = ""
-	}
-	})
-	if not response.StatusCode == 200 then
-		warn(string.format("Request returned with code %s!", response.StatusCode))
-	end
-	return response
 end
 
 function get_base_url(url)
