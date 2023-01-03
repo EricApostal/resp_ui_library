@@ -11,7 +11,7 @@ function send_request(url)
 	   Url = url,
 	   Method = "GET",
 	   Headers = {
-		   ["Authorization"] = "Bearer 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"
+		   ["Authorization"] = ""
 	   }
 	   })
 	   if not response.StatusCode == 200 then
@@ -133,7 +133,7 @@ function download_files(repository_index, local_repository_base, repository_url)
 
     for i, file_data in ipairs(repository_index) do
         -- Print a message indicating the progress of the download
-        -- print(string.format("%d/%d items downloaded!", i, #repository_index))
+        print(string.format("%d/%d items downloaded!", i, #repository_index))
 
         -- Create the directory structure for the file if it does not exist
         create_directory(file_data.path)
@@ -211,24 +211,30 @@ function generate_index(repository_url, local_path)
     local name = item.name
     local path = local_path .. "/" .. name
     local download_url = item.download_url
-    files[i] = {
+    local file_data = {
       name = name,
       path = path,
 	  type = item.type,
       download_url = download_url
     }
-
+	table.insert(files, file_data)
     -- Check if the item is a directory
     if item.type == "dir" then
-      -- If it is a directory, recursively call generate_index with the URL
-      -- of the directory as the repository_url argument
-      local subfiles = generate_index(item.url, path)
-      -- Add the subfiles to the files table
-      for subfile_name, subfile_info in pairs(subfiles) do
-        files[subfile_name] = subfile_info
-      end
-    end
-  end
+		-- print( string.format("Directory %s found!", files[i].path ))
+		-- If it is a directory, recursively call generate_index with the URL
+		-- of the directory as the repository_url argument
+		local subfiles = generate_index(item.url, path)
+		-- Add the subfiles to the files table
+
+		-- FOUND THE PROBLEM: 
+		-- [subfile_name] is an index, NOT the actual name (I caused that lol)
+
+		for subfile_name, subfile_info in pairs(subfiles) do
+			print( string.format("Subfile name = %s", subfile_name) )
+			table.insert(files, subfile_info)
+		end
+	end
+	end
 
   for _,v in files do
 	print(v.name)
