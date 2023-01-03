@@ -11,7 +11,7 @@ function send_request(url)
 	   Url = url,
 	   Method = "GET",
 	   Headers = {
-		   ["Authorization"] = ""
+		   ["Authorization"] = "Bearer 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"
 	   }
 	   })
 	   if not response.StatusCode == 200 then
