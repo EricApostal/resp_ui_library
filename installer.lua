@@ -143,7 +143,7 @@ function download_files(repository_index, local_repository_base, repository_url)
 		if file_data.type == "file" then
         	download_file(file_data)
 		else
-			print("it's a dir!")
+			-- print("it's a dir!")
 		end
     end
 
@@ -193,9 +193,7 @@ end
 -- Function to generate an index of the repository's files and directories
 function generate_index(repository_url, local_path)
 
-
   local files = {}
-
   local response = send_request(repository_url)
 
   -- If the request is not successful, print a warning message
@@ -208,6 +206,7 @@ function generate_index(repository_url, local_path)
 
   for i, item in pairs(json_return) do
     -- Modify the path field to include the full path to the file
+
     local name = item.name
     local path = local_path .. "/" .. name
     local download_url = item.download_url
@@ -219,33 +218,22 @@ function generate_index(repository_url, local_path)
     }
 	table.insert(files, file_data)
     -- Check if the item is a directory
-    if item.type == "dir" then
-		-- print( string.format("Directory %s found!", files[i].path ))
-		-- If it is a directory, recursively call generate_index with the URL
-		-- of the directory as the repository_url argument
-		local subfiles = generate_index(item.url, path)
-		-- Add the subfiles to the files table
 
-		-- FOUND THE PROBLEM: 
-		-- [subfile_name] is an index, NOT the actual name (I caused that lol)
+    if item.type == "dir" then
+		local subfiles = generate_index(item.url, path)
 
 		for subfile_name, subfile_info in pairs(subfiles) do
-			print( string.format("Subfile name = %s", subfile_name) )
+			-- print( string.format("Subfile name = %s", subfile_name) )
 			table.insert(files, subfile_info)
 		end
 	end
 	end
 
-  for _,v in files do
-	print(v.name)
-  end
-
-
+--   for _,v in files do
+-- 	print(v.name)
+--   end
   return files
-
 end
-
-
 
 print("Building roact repository...")
 build_repository("https://github.com/Roblox/roact/tree/master/src", "roact")
