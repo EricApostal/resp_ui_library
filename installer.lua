@@ -213,7 +213,7 @@ function generate_index(repository_url, local_path)
     local file_data = {
       name = name,
       path = path,
-	  type = item.type,
+	  type = item.type, 
       download_url = download_url
     }
 	table.insert(files, file_data)
