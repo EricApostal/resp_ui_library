@@ -31,10 +31,17 @@ function index_modules(module_path)
     end
 end
 
-local files = index_files("repos/resp_ui_lib")
-for file, name in pairs(files) do
-  print(file, name)
+
+function import.test()
+
+	print("Foo!")
+
 end
+
+-- local files = index_modules("repos/resp_ui_lib")
+-- for file, name in pairs(files) do
+--   print(file, name)
+-- end
 
 
 return import
